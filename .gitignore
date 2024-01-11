@@ -1,0 +1,6 @@
+/configs/ssl/*
+/data/*
+/logs/*
+/www/*
+.env
+!.gitkeep

@@ -1,0 +1,74 @@
+version: '3'
+
+services:
+    nginx:
+        container_name: "${PROJECT_NAME}-nginx"
+        image: nginx:${NGINX_VERSION}
+        restart: always
+        volumes:
+            - "./configs/nginx/default.conf:/etc/nginx/conf.d/default.conf"
+            - "./configs/ssl:/etc/ssl"
+            - "./www:/var/www/html"
+            - "./logs/nginx:/var/log/nginx"
+            - "./configs/nginx/default.template-${PROTOCOL_MODE}.conf:/etc/nginx/conf.d/default.template-${PROTOCOL_MODE}"
+        ports:
+            - "${HTTP_PORT}:80"
+            - "${HTTPS_PORT}:443"
+        env_file:
+            - .env
+        command: /bin/sh -c "envsubst '$$SERVER_NAME $$SSL_KEY_FILE $$SSL_CERT_FILE' < /etc/nginx/conf.d/default.template-${PROTOCOL_MODE} > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
+        environment:
+            - TZ=${CONTAINERS_TIMEZONE}
+        depends_on:
+            - php
+            - database
+    php:
+        container_name: "${PROJECT_NAME}-php"
+        image: bitnami/php-fpm:${PHP_VERSION}
+        restart: always
+        depends_on:
+            - database
+        environment:
+            - TZ=${CONTAINERS_TIMEZONE}
+        volumes:
+            - "./configs/php/php.ini:/opt/bitnami/php/etc/php.ini"
+            - "./configs/php/php-fpm.conf:/opt/bitnami/php/etc/php-fpm.conf"
+            - "./configs/php/php-fpm.d:/opt/bitnami/php/etc/php-fpm.d"
+            - "./logs/php:/opt/bitnami/php/logs"
+            - "./www:/var/www/html"
+    composer:
+        container_name: "${PROJECT_NAME}-composer"
+        image: "composer:${COMPOSER_VERSION}"
+        volumes:
+            - "./www:/app"
+        command: composer install
+    phpmyadmin:
+        container_name: "${PROJECT_NAME}-phpmyadmin"
+        image: phpmyadmin:${PMA_VERSION}
+        restart: always
+        environment:
+            - PMA_HOST=database
+            - PMA_PORT=3306
+            - PMA_USER=root
+            - PMA_PASSWORD=${MYSQL_ROOT_PASSWORD}
+            - UPLOAD_LIMIT=${PMA_UPLOAD_LIMIT}
+            - MEMORY_LIMIT=${PMA_MEMORY_LIMIT}
+            - TZ=${CONTAINERS_TIMEZONE}
+        depends_on:
+            - database
+            - nginx
+    database:
+        container_name: "${PROJECT_NAME}-database"
+        image: mysql:${MYSQL_VERSION}
+        restart: always
+        cap_add:
+            - SYS_NICE
+        environment:
+            - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+            - MYSQL_DATABASE=${MYSQL_DATABASE}
+            - MYSQL_USER=${MYSQL_USER}
+            - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+            - TZ=${CONTAINERS_TIMEZONE}
+        volumes:
+            - "./data/mysql:/var/lib/mysql"
+            - "./configs/mysql:/etc/mysql/conf.d"

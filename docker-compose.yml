@@ -4,7 +4,7 @@ services:
     nginx:
         container_name: "${PROJECT_NAME}-nginx"
         image: nginx:${NGINX_VERSION}
-        restart: always
+        restart: unless-stopped
         volumes:
             - "./configs/nginx:/etc/nginx/conf.d"
             - "./configs/ssl:/etc/ssl"
@@ -24,7 +24,7 @@ services:
     php:
         container_name: "${PROJECT_NAME}-php"
         image: bitnami/php-fpm:${PHP_VERSION}
-        restart: always
+        restart: unless-stopped
         depends_on:
             - database
         environment:
@@ -44,7 +44,7 @@ services:
     phpmyadmin:
         container_name: "${PROJECT_NAME}-phpmyadmin"
         image: phpmyadmin:${PMA_VERSION}
-        restart: always
+        restart: unless-stopped
         environment:
             - PMA_HOST=database
             - PMA_PORT=3306
@@ -59,7 +59,7 @@ services:
     database:
         container_name: "${PROJECT_NAME}-database"
         image: mysql:${MYSQL_VERSION}
-        restart: always
+        restart: unless-stopped
         cap_add:
             - SYS_NICE
         environment:

@@ -1,3 +1,4 @@
+/configs/nginx/default.conf
 /configs/ssl/*
 /data/*
 /logs/*

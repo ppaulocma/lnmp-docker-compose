@@ -39,7 +39,7 @@ services:
         container_name: "${PROJECT_NAME}-composer"
         image: "composer:${COMPOSER_VERSION}"
         volumes:
-            - "./www:/app"
+            - "./www/${COMPOSER_PATH}:/app"
         command: composer install
     phpmyadmin:
         container_name: "${PROJECT_NAME}-phpmyadmin"
